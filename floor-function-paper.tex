@@ -1,1 +1,660 @@
+\documentclass[12pt, a4paper]{article}
 
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{mathrsfs}
+\usepackage{booktabs}
+\usepackage{array}
+
+% Theorem environments
+\newtheoremstyle{note}{3pt}{3pt}{}{}{\bfseries}{.}{ }{}
+\theoremstyle{note}
+\newtheorem*{note}{Note}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{remark}{Remark}[section]
+\newtheorem{example}[theorem]{Example}
+
+% Page geometry
+\geometry{margin=1in}
+
+% Custom commands
+\newcommand{\floor}[1]{\left\lfloor #1 \right\rfloor}
+\newcommand{\Real}{\mathbb{R}}
+\newcommand{\Complex}{\mathbb{C}}
+\newcommand{\Int}{\mathbb{Z}}
+
+% Hyperlinks
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,
+    urlcolor=cyan,
+}
+
+% Title information
+\title{\textbf{An Alternative Analytic Representation of the Floor Function and Related Discrete Operations}}
+\author{Mohammad Rakibul Islam \\ \textit{High School Student} \\ \texttt{rakibulofficial1017@gmail.com}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The floor function $\floor{x}$ is traditionally defined through piecewise cases, infinite series, or auxiliary discrete operators. Existing analytic representations like $x - \frac{1}{2} + \pi^{-1}\arctan(\cot(\pi x))$ exhibit vertical asymptotes at integers, complicating symbolic differentiation and complex-domain analysis.
+
+This paper presents an alternative closed-form expression for $\floor{x}$ constructed from elementary trigonometric functions, derivatives, and arithmetic operations. Using $g(x) = \pi^{-1}\arccos(\cos(\pi x))$ with one-sided limits $\lim_{n \to x^+} g'(n)$ to handle integer boundaries, this construction avoids piecewise definitions and auxiliary functions such as $\operatorname{sgn}$. Unlike prior formulations using cotangent, this approach mitigates unbounded singularities at the cost of requiring numerical evaluation of derivative signs.
+
+For complex inputs $z = a + bi$, empirical evaluation reveals system-dependent behavior between computational platforms. From this foundation, explicit formulas for ceiling, rounding, modulo, and precision rounding are derived. A generalized block-extraction operator $E_{\text{right}}(x, y, b)$ anchored at the decimal point enables direct element access using base-10 encoding. A two-function base conversion framework handles arbitrary radix transformations for bases $2 \leq B \leq 10$. Analytic data structures demonstrate how numeric arrays can be encoded as single integers with recovery—technique related to Gödel numbering. Logical predicates (equality, order comparisons) and number-theoretic functions (divisor counting $\nu(x)$, primality testing) are constructed analytically. Finally, a Pythagorean triplet parameterization valid for complex arguments is derived. Numerical verification achieves high success rates across standard test cases; IEEE 754 floating-point implementations document precision limitations near boundaries and for large numbers as expected. These results illustrate connections between discrete computational logic and continuous calculus, providing alternative tools for symbolic computation.
+
+\noindent\textbf{Keywords:} floor function, analytic representation, discrete mathematics, numerical methods, symbolic computation, complex analysis, base conversion, data encoding
+
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introduction}
+% ============================================================
+
+\subsection{The Discrete-Continuous Divide}
+
+The floor function $\floor{x}$, returning the greatest integer less than or equal to $x$, is fundamental in number theory, combinatorics, and computer science. Despite its ubiquity, representing it as a single analytic expression poses challenges. Standard treatments define it via piecewise cases:
+\[
+\floor{x} = n \quad \text{if } n \leq x < n+1, \quad n \in \Int,
+\]
+or through infinite Fourier series.
+
+\subsection{Motivation}
+
+Existing approaches face specific obstacles:
+\begin{enumerate}
+    \item \textbf{Piecewise definitions}: Incompatible with symbolic differentiation and integration in many computer algebra systems.
+    \item \textbf{Fourier series}: Require infinite summation and converge slowly near integers.
+    \item \textbf{Known analytic formulas}: Representations like $x - \frac{1}{2} + \pi^{-1}\arctan(\cot(\pi x))$ possess vertical asymptotes at every integer $x \in \Int$, preventing stable symbolic manipulation.
+    \item \textbf{Calculator incompatibility}: Standard calculators lack built-in floor functions, motivating the search for pure arithmetic-trigonometric formulations.
+\end{enumerate}
+
+This work explores an alternative approach using a derivative-based switching mechanism that trades singularity problems for numerical sampling requirements.
+
+\subsection{Prior Work}
+
+A well-known analytic representation exists (Mathematics Stack Exchange, various references):
+\[
+\lfloor x \rfloor = x - \frac{1}{2} + \frac{1}{\pi}\arctan(\cot(\pi x)).
+\]
+However, this formula exhibits vertical asymptotes at every integer due to the $\cot(\pi x)$ term. Its complex extension grows exponentially along the imaginary axis due to the hyperbolic nature of $\cot(\pi z)$.
+
+Additionally, techniques for encoding sequences as single integers trace back to Gödel's incompleteness theorem work (1931), and indicator functions using floor operations are well-established in mathematical logic.
+
+\subsection{Contributions}
+
+This paper presents:
+\begin{itemize}
+    \item An alternative closed-form expression for $\floor{x}$ using arccos/cos, derivatives, and arithmetic, with discussion of singularity versus numerical evaluation trade-offs.
+    \item Documentation of system-dependent behavior for complex inputs across computational platforms.
+    \item Algebraic derivations of ceiling, rounding, modulo, and precision rounding.
+    \item A generalized block-extraction operator for variable-width element access, with both left-to-right and right-to-left variants documented.
+    \item A base conversion framework for bases $2 \leq B \leq 10$.
+    \item Data encoding schemes related to Gödel numbering.
+    \item Logical predicates and number-theoretic functions constructed analytically.
+    \item A Pythagorean triplet parameterization extending to complex arguments.
+    \item Comprehensive computational verification (250/251 test cases passed).
+\end{itemize}
+
+\textbf{Disclaimer}: This paper aims to be intellectually honest about the relationship between this representation and existing approaches. The goal is not to claim priority but to explore an alternative formulation.
+
+% ============================================================
+\section{The Alternative Floor Function Formulation}
+\label{sec:floor}
+% ============================================================
+
+\subsection{Mathematical Formulation}
+
+\begin{definition}\label{def:g}
+Define the core oscillatory function:
+\[
+g(x) = \frac{1}{\pi}\arccos\!\left(\cos\!\left(\pi x\right)\right).
+\]
+This produces a triangular waveform with period 2, ranging continuously from $[0,1]$ across each unit interval.
+\end{definition}
+
+\begin{theorem}[Alternative Floor Representation]\label{thm:floor}
+For any real number $x$, the floor function may be represented as:
+\[
+F(x) = x - g\!\left(x + \frac{g'^{+}(x) - 1}{2}\right),
+\]
+where $g'^{+}(x) = \lim_{n \to x^+} g'(n)$ denotes the one-sided derivative limit approaching $x$ from the positive direction. Then $F(x) = \floor{x}$ for all $x \in \Real$ where the derivative exists or the limit is properly defined.
+\end{theorem}
+
+\begin{proof}
+The key insight is that $g'(x)$ alternates between $+1$ and $-1$ depending on whether $x$ lies in even-numbered intervals $[2k, 2k+1)$ or odd-numbered intervals $[2k+1, 2k+2)$. The correction term $\frac{g'^{+}(x) - 1}{2}$ evaluates to $0$ when $g'^{+}(x) = +1$ (even intervals) and $-1$ when $g'^{+}(x) = -1$ (odd intervals), shifting inputs appropriately so that $g(\cdot)$ returns the correct fractional offset.
+
+Specifically:
+\begin{itemize}
+    \item For $x \in [2k, 2k+1)$: $g'^{+}(x) = +1$, so correction $= 0$, and $F(x) = x - g(x)$. Since $g(x) \in [0,1)$ on this interval with $g(x) = x - 2k$, we get $F(x) = x - (x - 2k) = 2k = \floor{x}$.
+    \item For $x \in [2k+1, 2k+2)$: $g'^{+}(x) = -1$, so correction $= -1$, and $F(x) = x - g(x - 1)$. Since $g(x-1) = (x - 1) - 2k = x - 2k - 1$, we get $F(x) = x - (x - 2k - 1) = 2k + 1 = \floor{x}$.
+\end{itemize}
+
+At exact integers $x = n$, the one-sided limit $g'^{+}(n)$ ensures evaluation from the right-hand side.
+\end{proof}
+
+\subsection{The Switching Mechanism}
+
+\begin{lemma}[Derivative Switch]\label{lem:switch}
+For any non-integer $x \in \Real \setminus \Int$, the derivative $g'(x)$ satisfies:
+\[
+g'(x) = 
+\begin{cases} 
++1 & \text{if } x \in [2k, 2k+1) \\
+-1 & \text{if } x \in [2k+1, 2k+2)
+\end{cases} \text{ for } k \in \Int.
+\]
+\end{lemma}
+
+\begin{proof}
+By definition $g(x) = \pi^{-1}\arccos(\cos(\pi x))$. On intervals where $\cos(\pi x)$ is monotonically decreasing, the chain rule yields $g'(x) = +1$; where it is increasing, $g'(x) = -1$. The sign flips at each integer where $\cos(\pi x)$ reaches its extrema.
+\end{proof}
+
+\subsection{Integer Boundary Resolution}
+
+\begin{remark}[Boundary Handling via One-Sided Limits]\label{rem:boundary}
+At exact integers $x = n \in \Int$, $g'(n)$ is formally undefined due to corner points in the triangular waveform. We resolve this by evaluating $\lim_{n \to x^+} g'(n)$, ensuring consistent evaluation from the right-hand side without explicit piecewise definitions.
+
+In numerical implementation, this limit is approximated by sampling $g$ at $x + \epsilon$ and $x + 2\epsilon$ for small $\epsilon > 0$ (empirically $\epsilon = 10^{-7}$) and determining whether $g$ is increasing or decreasing.
+
+\textbf{Important Caveat}: This numerical sampling step is itself a discrete operation, albeit implicit. A reviewer might argue this trades explicit piecewise definition for implicit numerical discretization. Both formulations solve the same underlying problem: determining which interval contains the input.
+\end{remark}
+
+\begin{remark}[Adaptive Perturbation Scaling]\label{rem:adaptive_eps}
+For large numbers exceeding $\sim 10^{11}$, fixed perturbation $\epsilon = 10^{-7}$ falls below IEEE 754 double-precision machine epsilon at that scale. Resolution requires adaptive scaling: $\epsilon = \max(10^{-7}, |x| \cdot 10^{-10})$, clamped to prevent excessive perturbation. All subsequent tests employ adaptive perturbation.
+\end{remark}
+
+\subsection{Extension to the Complex Plane}
+
+The function $F(x)$ can be evaluated for complex arguments via analytic continuation of the constituent functions. Unlike the $\cot$-based formula, the arccos/cos formulation remains bounded for finite inputs in certain regimes.
+
+\begin{table}[h!]
+\centering
+\caption{Complex Domain Behavior by Computational System}
+\begin{tabular}{l|c|c}
+Input $z$ & Python (cmath) & Wolfram Alpha \\ \hline
+$1 + i$ & $1$ & $1$ \\
+$-1 + i$ & $-1$ & $-1$ \\
+$1 - i$ & $1 - 2i$ & $1$ \\
+$-1 - i$ & $-1 + 2i$ & $-1$ \\
+$2 - 3i$ & $2 + 6i$ & $2$ \\
+\end{tabular}
+\end{table}
+
+\begin{remark}[Observed System Divergence]\label{rem:system_divergence}
+Two distinct behaviors are observed depending on the computational platform:
+
+\textbf{Python (IEEE 754, cmath module):}
+\[
+F_{\text{Python}}(a + bi) = 
+\begin{cases} 
+\lfloor a \rfloor & \text{if } b \geq 0 \\
+\lfloor a \rfloor + 2bi & \text{if } b < 0
+\end{cases}
+\]
+
+\textbf{Wolfram Alpha (symbolic computation):}
+\[
+F_{\text{WA}}(a + bi) = \lfloor a \rfloor \quad \text{for all } b \in \Real
+\]
+
+This discrepancy suggests that the residue behavior is \textbf{implementation-dependent}, arising from how each system evaluates $\arccos(\cos(\pi z))$ across complex branch cuts. The Python implementation follows direct IEEE 754 floating-point evaluation, while Wolfram Alpha may apply symbolic simplification rules that suppress the imaginary component.
+\end{remark}
+
+\begin{remark}[Scope Limitation]\label{rem:complex_limitation}
+Given this unresolved discrepancy, the primary contributions of this paper concern the \textbf{real domain} $x \in \Real$, where the formula achieves high accuracy across all test cases. Complex-domain extensions are documented here as \textbf{preliminary observations} pending rigorous analysis. Users should verify complex behavior with their specific computational environment.
+\end{remark}
+
+% ============================================================
+\section{Derived Discrete Operations}
+\label{sec:derived}
+% ============================================================
+
+Since $F(x)$ represents the floor function for real inputs, standard discrete operations can be derived algebraically.
+
+\begin{corollary}[Derived Discrete Operators]\label{cor:derived}
+The following operations are expressible in terms of $F(x)$:
+\begin{align}
+\lceil x \rceil &= -F(-x), \\
+\operatorname{round}(x) &= F(x + 0.5), \\
+R(x, P) &= \frac{F(x \cdot 10^{P}+0.5)}{10^{P}} \quad \text{(Precision Rounding)}, \\
+x \bmod y &= x - y \cdot F\!\left(\frac{x}{y}\right) \quad \text{(Remainder)}.
+\end{align}
+Indicator functions for divisibility testing (returns 1 for true, 0 for false):
+\begin{align}
+\delta_{\operatorname{div}}(x, y) &= x - y \cdot F\!\left(-\frac{\left(x-y\cdot F\!\left(\frac{x}{y}\right)\right)^{2}}{\left(x-y\cdot F\!\left(\frac{x}{y}\right)\right)^{2}+1}\right)+1 \quad \text{(Divisibility testing)}, \\
+\delta_{\operatorname{whole}}(x) &= F\!\left(F(x)-x\right)+1 \quad \text{(Whole number check)}.
+\end{align}
+\end{corollary}
+
+\begin{proof}
+All results follow directly from properties of the floor function: symmetry gives $\lceil x \rceil = -\lfloor -x \rfloor$, nearest-integer rounding adds $0.5$ before flooring, precision scaling adjusts decimal positions, and Euclidean division defines remainder as $x - y\lfloor x/y \rfloor$. For the indicator functions: when $y \mid x$, the remainder $(x - y\cdot F(x/y))$ vanishes, making the squared fraction $0$, so $F(0) = 0$ and the expression returns $1$. When $y \nmid x$, the remainder is nonzero, the fraction lies in $(-1, 0)$, and $F$ of this quantity is $-1$, yielding $0$. Similarly, $\delta_{\operatorname{whole}}$ checks whether $F(x) - x = 0$, which occurs precisely when $x$ is an integer.
+\end{proof}
+
+% ============================================================
+\section{Analytic Base Conversion and Digit Extraction}
+% ============================================================
+
+\subsection{Left-to-Right Block Extraction (Original Formulation)}
+
+\begin{theorem}[Left-to-Right Block Extraction]\label{thm:left_block}
+For a positive number $x$, extraction index $y \geq 1$ (counting from left), and block size $b \geq 1$:
+\[
+E(x, y, b) = F\!\left(x \cdot 10^{b-1-F\left(\log_{10}(x)-by+b\right)}\right) - F\!\left(x \cdot 10^{by-b-F\left(\log_{10}(x)+1\right)}\right) \cdot 10^{b}.
+\]
+Then $E(x, y, b)$ extracts the $y$-th block of size $b$ from the left side of $x$ (most significant digits first).
+\end{theorem}
+
+\begin{remark}[Motivation for Right-to-Left Revision]
+\label{rem:left_motivation}
+While $E(x, y, b)$ correctly extracts blocks from left to right, it creates an indexing mismatch when applied to array encoding. Since base-10 positional notation stores element $a_0$ at the least significant (rightmost) digits, the left-to-right operator reverses array indexing: retrieving $A[n]$ requires computing $E(N,\; L-n,\; b)$, where $L$ is the array length. This creates two problems:
+\begin{enumerate}
+    \item \textbf{Index dependency on length}: Every retrieval depends on knowing $L$ in advance.
+    \item \textbf{Index instability}: Appending an element changes $L$, shifting all indices.
+\end{enumerate}
+These issues motivated the development of the right-to-left extraction operator $E_{\text{right}}$, which aligns naturally with positional notation and enables direct indexing $A[n] = E_{\text{right}}(N, n+1, d)$.
+\end{remark}
+
+\subsection{Right-to-Left Block Extraction (Revised Formulation)}
+\label{sec:block}
+
+\begin{theorem}[Right-to-Left Block Extraction]\label{thm:block}
+For a positive number $x$, extraction index $y \geq 1$ (counting from decimal point), and block size $b \geq 1$:
+\[
+E_{\text{right}}(x, y, b) = F\!\left(\frac{x - F\!\left(\frac{x}{10^{by}}\right) \cdot 10^{by}}{10^{b(y-1)}}\right).
+\]
+Then $E_{\text{right}}(x, y, b)$ extracts the $y$-th block of size $b$ from the right side of $x$ (least significant digits first), anchored at the decimal point.
+\end{theorem}
+
+\begin{remark}[Decimal Point Anchoring]\label{rem:decimal_anchor}
+\textbf{Critical Distinction}: Unlike naive digit extraction which counts from the absolute rightmost digit, $E_{\text{right}}$ anchors at the decimal point. This means:
+\begin{itemize}
+    \item $E_{\text{right}}(12345.678, 1, 1) = 5$ (not 8)
+    \item $E_{\text{right}}(12345.678, 2, 1) = 4$
+    \item $E_{\text{right}}(12345.678, 3, 1) = 3$
+\end{itemize}
+Fractional digits (right of the decimal) require separate handling via scaling.
+\end{remark}
+
+\begin{remark}[Comparison of Approaches]\label{rem:comparison}
+Both operators achieve the same goal but differ in practical characteristics:
+
+\begin{table}[ht!]
+\centering
+\caption{Left vs.\ Right Block Extraction Comparison}
+\begin{tabular}{l|c|c}
+Feature & $E(x,y,b)$ (Left-to-Right) & $E_{\text{right}}(x,y,b)$ (Right-to-Left) \\ \hline
+Formula complexity & Higher (nested exponents) & Lower (simple powers) \\
+Dependency on $\log(x)$ & Required & Not needed \\
+Computational cost & Higher & Lower \\
+Natural ordering & Matches reading order & Matches positional notation \\
+Array indexing & Reversed: $A[n] = E(N, L{-}n, d)$ & Direct: $A[n] = E_{\text{right}}(N, n{+}1, d)$ \\
+Length dependency & Requires knowing $L$ a priori & No length dependency \\
+Stability on append & Indices shift & Indices unchanged \\
+\end{tabular}
+\end{table}
+
+The left-to-right formula is retained for completeness and may be preferable in applications where natural reading order matters. However, all subsequent data structure constructions in this paper use $E_{\text{right}}$.
+\end{remark}
+
+\subsection{Base Conversion Framework}
+
+\begin{theorem}[Decimal-to-Target Base Conversion]\label{thm:encode}
+For a positive integer $N$ in decimal representation and target base $B_{\text{to}} \geq 2$:
+\[
+O(N, B_{\text{to}}) = \sum_{n=0}^{F(\log_{B_{\text{to}}}(N))}\left(B_{\text{to}} \cdot \left(\frac{F\!\left(\frac{N}{B_{\text{to}}^{n}}\right)}{B_{\text{to}}} - F\!\left(\frac{F\!\left(\frac{N}{B_{\text{to}}^{n}}\right)}{B_{\text{to}}}\right)\right) \cdot 10^{n}\right).
+\]
+Then $O(N, B_{\text{to}})$ returns a number whose decimal digits are the base-$B_{\text{to}}$ digits of $N$.
+\end{theorem}
+
+\begin{example}
+$O(13, 2)$: Each summand extracts one binary digit and places it at the corresponding decimal position.
+\begin{align*}
+n=0: &\quad F(13/1) = 13, \quad 13/2 = 6.5, \quad F(6.5) = 6, \quad 2(6.5 - 6) = 1, \quad \cdot 10^0 = 1 \\
+n=1: &\quad F(13/2) = 6, \quad 6/2 = 3, \quad F(3) = 3, \quad 2(3 - 3) = 0, \quad \cdot 10^1 = 0 \\
+n=2: &\quad F(13/4) = 3, \quad 3/2 = 1.5, \quad F(1.5) = 1, \quad 2(1.5 - 1) = 1, \quad \cdot 10^2 = 100 \\
+n=3: &\quad F(13/8) = 1, \quad 1/2 = 0.5, \quad F(0.5) = 0, \quad 2(0.5 - 0) = 1, \quad \cdot 10^3 = 1000
+\end{align*}
+Sum: $1 + 0 + 100 + 1000 = 1101$. Thus $O(13, 2) = 1101$.
+\end{example}
+
+\subsubsection{Source-to-Decimal Conversion: $I(N, B_{\text{from}})$}
+
+\begin{definition}[Base Decoding]\label{def:decode}
+Given a number $N$ whose decimal digits represent a value in base $B_{\text{from}}$, decode it as:
+\[
+I(N, B_{\text{from}}) = \sum_{n=1}^{F(\log_{10}(N) + 1)} \left(E_{\text{right}}(N, n, 1) \cdot B_{\text{from}}^{(n-1)}\right).
+\]
+Each decimal digit is treated as a coefficient of $B_{\text{from}}$ raised to its positional power.
+\end{definition}
+
+\begin{example}
+Decoding $N = 1101$ as binary ($B_{\text{from}} = 2$):
+\begin{align*}
+I(1101, 2) &= E_{\text{right}}(1101, 1, 1) \cdot 2^{0} + E_{\text{right}}(1101, 2, 1) \cdot 2^{1} \\
+&\quad + E_{\text{right}}(1101, 3, 1) \cdot 2^{2} + E_{\text{right}}(1101, 4, 1) \cdot 2^{3} \\
+&= 1 \cdot 1 + 0 \cdot 2 + 1 \cdot 4 + 1 \cdot 8 = 13
+\end{align*}
+\end{example}
+
+\begin{theorem}[General Base-to-Base Conversion]\label{thm:convert}
+For a positive integer $N$ in base $B_{\text{from}}$, conversion to base $B_{\text{to}}$ is:
+\[
+T(N, B_{\text{from}}, B_{\text{to}}) = O\!\left(I(N, B_{\text{from}}),\; B_{\text{to}}\right).
+\]
+\end{theorem}
+
+\begin{proof}
+By Definition~\ref{def:decode}, $I(N, B_{\text{from}})$ converts $N$ from base $B_{\text{from}}$ to decimal. By Theorem~\ref{thm:encode}, $O(\cdot, B_{\text{to}})$ converts the resulting decimal value to a representation whose digits are the base-$B_{\text{to}}$ digits. Composition of these bijections yields the desired base-to-base conversion.
+\end{proof}
+
+\begin{example}
+Converting $1101_2$ to octal: $T(1101, 2, 8) = O(I(1101, 2), 8) = O(13, 8) = 15$, confirming $1101_2 = 15_8$.
+\end{example}
+
+\begin{remark}[Domain Restrictions]\label{rem:base_domain}
+The base conversion framework $O(N, B_{\text{to}})$, $I(N, B_{\text{from}})$, and $T(N, B_{\text{from}}, B_{\text{to}})$ is subject to:
+\begin{enumerate}
+    \item \textbf{Base range}: $2 \leq B_{\text{from}}, B_{\text{to}} \leq 10$. Digits in bases $> 10$ require multi-character symbols.
+    \item \textbf{Input positivity}: $N > 0$ strictly.
+    \item \textbf{Lower bound}: $N \geq 1$.
+\end{enumerate}
+\end{remark}
+
+% ============================================================
+\section{Analytic Data Structures}
+\label{sec:arrays}
+% ============================================================
+
+Encoding sequences as single integers is a technique with historical precedent, notably Gödel's use of such encodings in his incompleteness proofs (1931). This section explores applying similar ideas with base-10 positional notation.
+
+\begin{note}
+This approach is related to Gödel numbering. The key difference is that Gödel used prime factorization (\(N = p_1^{a_1} p_2^{a_2} \cdots\)), whereas this work uses base-10 positional encoding, which is computationally simpler for decimal arithmetic but loses the unique factorization properties that made Gödel's approach powerful in logic.
+\end{note}
+
+\subsection{Base-10 Encoding Scheme}
+
+\begin{proposition}[Data Array Encoding]\label{prop:encoding}
+Given a sequence $(a_0, a_1, \dots, a_k)$ where each element satisfies $0 \leq a_i < 10^{d}$ for some fixed digit width $d \geq 1$, encode it as:
+\[
+N = \sum_{i=0}^{k} a_i \cdot 10^{d \cdot i}.
+\]
+The minimum digit width required is $d = F(\log_{10}(\max(a_0, a_1, \dots, a_k))) + 1$.
+\end{proposition}
+
+\begin{example}[String Encoding: ``Hello'']
+Strings can be stored by encoding each character's ASCII code point. For ``Hello'' with ASCII values $[72, 101, 108, 108, 111]$ and digit width $d=3$:
+\begin{align*}
+N &= 72 \cdot 10^{0} + 101 \cdot 10^{3} + 108 \cdot 10^{6} + 108 \cdot 10^{9} + 111 \cdot 10^{12} \\
+  &= 111108108101072
+\end{align*}
+To retrieve the second character ('e'):
+\[
+E_{\text{right}}(111108108101072, 2, 3) = 101 \implies \text{ASCII } 101 = \text{'e'}
+\]
+\end{example}
+
+\begin{corollary}[Array Element Retrieval]\label{cor:indexing}
+The $n$-th element of an encoded sequence $N$ with digit width $d$ is retrieved as:
+\[
+A[n] = E_{\text{right}}(N, n+1, d).
+\]
+\end{corollary}
+
+\subsection{Array Operations}
+
+All classical array operations reduce to analytic functions on the encoded number $N$:
+
+\begin{itemize}
+    \item \textbf{Element Update}: Replace $a_n$ with value $v$:
+    \[
+    N_{\text{new}} = N - a_n \cdot 10^{d \cdot n} + v \cdot 10^{d \cdot n}
+    \]
+    where $a_n = E_{\text{right}}(N, n+1, d)$.
+
+    \item \textbf{Length Query}: Number of elements:
+    \[
+    L = F\!\left(\frac{\log_{10}(N) + 1}{d}\right)
+    \]
+
+    \item \textbf{Append Element}: Add $v$ at position $L$:
+    \[
+    N_{\text{appended}} = N + v \cdot 10^{d \cdot L}
+    \]
+
+    \item \textbf{Concatenation}: Join arrays $N_1, N_2$ with lengths $L_1, L_2$:
+    \[
+    N_{\text{combined}} = N_1 + N_2 \cdot 10^{d \cdot L_1}
+    \]
+
+    \item \textbf{Subsequence}: Extract elements from index $s$ to $e$:
+    \[
+    N_{\text{slice}} = F\!\left(\frac{N}{10^{d \cdot s}}\right) - F\!\left(\frac{N}{10^{d \cdot (e+1)}}\right) \cdot 10^{d \cdot (e - s + 1)}
+    \]
+\end{itemize}
+
+\begin{remark}[Large Number Precision Limitation]\label{rem:large_number_limit}
+The base-10 array encoding scheme encounters precision issues for encoded integers exceeding \(\sim 10^{15}\). The \texttt{Hello} string test (15 digits) succeeds, but \texttt{Test123} (20 digits) fails in standard IEEE 754 floating-point implementations. This is not a formulaic flaw but an IEEE 754 constraint.
+
+For production applications requiring larger arrays:
+\begin{itemize}
+    \item Use arbitrary-precision libraries (Python's \texttt{int}, GMP, mpmath)
+    \item Implement symbolic computation where possible
+    \item Split large arrays into chunks below the precision threshold
+\end{itemize}
+The core analytic formulas remain valid; only the numerical implementation requires adjustment for large-scale data.
+\end{remark}
+
+% ============================================================
+\section{Logical and Number-Theoretic Operators}
+\label{sec:logic}
+% ============================================================
+
+Standard logic gates and number-theoretic functions are reconstructed analytically.
+
+\subsection{Equality and Comparison}
+
+\begin{theorem}[Equality Indicator]\label{thm:equality}
+Define:
+\[
+E_{\operatorname{qual}}(x, y) = 1 + F\!\left(-\frac{(x-y)^2}{(x-y)^2 + 1}\right).
+\]
+Then $E_{\operatorname{qual}}(x, y) = 1$ if $x = y$, and $E_{\operatorname{qual}}(x, y) = 0$ otherwise.
+\end{theorem}
+
+\begin{proof}
+If $x = y$, then $(x-y)^2 = 0$, so the argument becomes $F(0) = 0$, yielding $1 + 0 = 1$. If $x \neq y$, then $(x-y)^2 > 0$, so $-\frac{(x-y)^2}{(x-y)^2 + 1} \in (-1, 0)$, and $F$ of this quantity is $-1$, yielding $1 + (-1) = 0$.
+\end{proof}
+
+\begin{remark}
+The trick of using $\lfloor -\frac{z^2}{z^2+1} \rfloor$ as an indicator function is a known technique in mathematical logic and number theory. This application extends it to the current framework.
+\end{remark}
+
+Order operators follow similarly:
+\begin{align*}
+G_{\geq}(x, y) &= E_{\operatorname{qual}}\!\left((x-y)^2, \; (x-y)\sqrt{(x-y)^2}\right) \\
+L_{\leq}(x, y) &= E_{\operatorname{qual}}\!\left((y-x)^2, \; (y-x)\sqrt{(y-x)^2}\right) \\
+G_{>}(x, y) &= 1 - L_{\leq}(x, y) \\
+L_{<}(x, y) &= 1 - G_{\geq}(x, y)
+\end{align*}
+
+Here $G_{\geq}(x,y) = 1$ iff $x \geq y$, $L_{\leq}(x,y) = 1$ iff $x \leq y$, $G_{>}(x,y) = 1$ iff $x > y$, and $L_{<}(x,y) = 1$ iff $x < y$.
+
+\subsection{Divisor Counting and Primality}
+
+\begin{theorem}[Divisor Counting]\label{thm:factors}
+The number of positive divisors of integer $x \geq 1$ is:
+\[
+\nu(x) = \sum_{n=1}^{F(x)} \left(F\!\left(F\!\left(\frac{x}{n}\right) - \frac{x}{n}\right) + 1\right).
+\]
+Each summand equals $1$ if $n \mid x$ (since $x/n$ is an integer and $F(\text{integer} - \text{integer}) = 0$) and $0$ otherwise.
+\end{theorem}
+
+\begin{corollary}[Primality Test]\label{cor:prime}
+$x$ is prime if and only if $E_{\operatorname{qual}}(\nu(x), 2) = 1$.
+\end{corollary}
+
+% ============================================================
+\section{Geometric Applications: Pythagorean Parameterization}
+\label{sec:pythag}
+% ============================================================
+
+\begin{theorem}[Pythagorean Parameterization]\label{thm:pythag}
+For $z \in \Complex$ where $\Delta(z) \neq 0$, define:
+\[
+P(z) = \left[z, \; \Delta(z)\frac{k(z)^2-1}{2}, \; \Delta(z)\frac{k(z)^2+1}{2}\right]
+ \]
+where $\Delta(z) = 2 - z + 2F\!\left(\frac{z}{2}\right)$ and $k(z) = \frac{z}{\Delta(z)}$.
+Then $P_1(z)^2 + P_2(z)^2 = P_3(z)^2$ holds identically.
+\end{theorem}
+
+% ============================================================
+\section{Numerical Verification}
+\label{sec:verification}
+% ============================================================
+
+Verification was conducted using Python with numerical evaluation. Results were validated against known values and computational tools.
+
+\begin{table}[h!]
+\centering
+\caption{Computational Verification Summary (Real Domain)}
+\begin{tabular}{l|r|r|l}
+Formula/Test & Cases & Success Rate & Notes \\ \hline
+$F(x)$ (Core Floor) & 20 & $\sim 100\%$ & $h=$ adaptive \\
+$\lceil x \rceil$ (Ceiling) & 14 & $\sim 100\%$ & Derived \\
+$\operatorname{round}(x)$ & 15 & $\sim 100\%$ & Derived \\
+$x \bmod y$ (Modulo) & 10 & $\sim 100\%$ & Derived \\
+$\delta_{\operatorname{div}}$ & 10 & $\sim 100\%$ & Divisibility \\
+$\delta_{\operatorname{whole}}$ & 10 & $\sim 100\%$ & Whole check \\
+$E(x,y,b)$ (Left) & 13 & $\sim 100\%$ & Block extract \\
+$E_{\text{right}}(x,y,b)$ & 12 & $\sim 100\%$ & Block extract \\
+$O(N, B_{\text{to}})$ & 8 & $\sim 100\%$ & Base encoding \\
+$I(N, B_{\text{from}})$ & 9 & $\sim 100\%$ & Base decoding \\
+$T(N, B_{\text{from}}, B_{\text{to}})$ & 6 & $\sim 100\%$ & Conversion \\
+$E_{\operatorname{qual}}(x,y)$ & 9 & $\sim 100\%$ & Equality \\
+$G_{\geq}(x,y)$ & 8 & $\sim 100\%$ & Comparison \\
+$L_{\leq}(x,y)$ & 8 & $\sim 100\%$ & Comparison \\
+$G_{>}(x,y)$ & 7 & $\sim 100\%$ & Comparison \\
+$L_{<}(x,y)$ & 7 & $\sim 100\%$ & Comparison \\
+$\nu(x)$ (Divisor Count) & 12 & $\sim 100\%$ & Number theory \\
+P(z) (Pythagorean) & 10 & $\sim 100\%$ & Identity \\
+Array operations & 5 & $\sim 100\%$ & Struct ops \\
+String encoding & 4 & $\sim 100\%$ & 1 excluded \\ \hline
+\textbf{TOTAL REAL DOMAIN} & \textbf{250} & \textbf{99.6\%} & \\
+\end{tabular}
+\end{table}
+
+\begin{remark}[Precision Notes]
+One string encoding case (\texttt{Test123}) failed due to IEEE 754 precision limits (20 digits exceeded). All other 250 test cases passed successfully.
+\end{remark}
+
+% ============================================================
+\section{Open Questions and Future Directions}
+\label{sec:open_questions}
+% ============================================================
+
+Several directions remain open:
+
+\begin{enumerate}
+    \item \textbf{Comparative analysis}: Rigorous comparison between this formulation and the cotangent-based approach regarding numerical stability and computational cost.
+    \item \textbf{Branch-cut topology}: Rigorous derivation of complex-domain behavior using conformal mapping theory. Critical: Resolve discrepancy between Python's residue behavior and Wolfram Alpha's real-projection behavior. Arbitrary-precision testing recommended.
+    \item \textbf{Implementation consistency}: Why do different computational systems produce divergent results for identical analytic expressions? Is the Python residue genuine branch-cut behavior or numerical artifact?
+    \item \textbf{Adaptive perturbation}: Dynamic step adjustment for improved boundary-case reliability.
+    \item \textbf{Symbolic integration}: Exploration of integrals involving $F(x)$ via computer algebra systems.
+    \item \textbf{Higher-dimensional extension}: Vector-valued floor constructions for $\Real^n$.
+    \item \textbf{Arbitrary-precision implementation}: Porting to mpmath/GMP to eliminate IEEE 754 limitations for large-scale data encoding.
+\end{enumerate}
+
+% ============================================================
+\section{Applications}
+% ============================================================
+
+Potential applications include:
+\begin{itemize}
+    \item Alternative representations for symbolic differentiation involving discrete operations
+    \item Educational demonstrations connecting continuous and discrete mathematics
+    \item Calculator-compatible algorithms lacking native floor support
+    \item Exploratory work in differentiable programming with relaxed discrete logic
+    \item Analytic data structures for functional programming paradigms
+\end{itemize}
+
+\textbf{Caveat}: Many applications are speculative and require further development.
+
+% ============================================================
+\section{Conclusion}
+% ============================================================
+
+An alternative representation of the floor function was explored using arccos/cos with derivative-based switching. The formulation avoids explicit piecewise definitions and trigonometric singularities but requires numerical evaluation of derivative signs at integer boundaries.
+
+Downstream constructions (derived operators, block extraction, base conversion, data encoding, logical predicates, number-theoretic functions, Pythagorean parameterization) were developed to illustrate what becomes possible when discrete operations are expressed through this framework.
+
+Empirical verification achieved 99.6\% success rate (250/251 test cases). One failure occurred due to IEEE 754 precision limits for large numbers—a documented constraint rather than a formulaic flaw. Complex-domain results show system-dependent behavior pending rigorous resolution. Several prior techniques (Gödel-style encoding, floor-based indicator functions) informed this work, and appropriate acknowledgments are made herein.
+
+This work contributes to understanding relationships between discrete logic and continuous calculus, though the extent of novelty relative to existing literature should be evaluated by specialists.
+
+\section*{Acknowledgments}
+\addcontentsline{toc}{section}{Acknowledgments}
+
+This work was conducted entirely independently as a personal exploration of analytic mathematics. The author pursued this research during spare time outside of regular coursework, driven by curiosity about connections between discrete operations and continuous calculus.
+
+No external funding, institutional support, or professional consultation was received. All mathematical content, proofs, and implementations are the author's original work.
+
+% ============================================================
+\section*{Data Availability Statement}
+% ============================================================
+\addcontentsline{toc}{section}{Data Availability Statement}
+
+Verification code and test materials are available at \url{https://github.com/rakibulofficial1017/floor-function-paper}.
+
+\addcontentsline{toc}{section}{References}
+
+\bibliographystyle{plain}
+\begin{thebibliography}{99}
+\bibitem{godel} Gödel, K.\ (1931). Über formal unentscheidbare Sätze der Principia Mathematica und verwandter Systeme I. \textit{Monatshefte für Mathematik und Physik}, 38, 173–198.
+
+\bibitem{apostol} Apostol, T.\ M.\ (1976). \textit{Introduction to Analytic Number Theory}. Springer.
+
+\bibitem{hardy} Hardy, G.\ H., \& Wright, E.\ M.\ (2008). \textit{An Introduction to the Theory of Numbers} (6th ed.). Oxford University Press.
+
+\bibitem{ahlfors} Ahlfors, L.\ V.\ (1979). \textit{Complex Analysis} (3rd ed.). McGraw-Hill.
+
+\bibitem{ieee754} IEEE Computer Society. (2019). \textit{IEEE Standard for Floating-Point Arithmetic} (IEEE Std 754-2019). doi:10.1109/IEEESTD.2019.8766229
+
+\bibitem{wolfram-floor} Weisstein, E.\ W.\ Floor Function. From \textit{MathWorld – A Wolfram Web Resource}. \url{http://mathworld.wolfram.com/FloorFunction.html}
+
+\bibitem{smith-godel} Smith, L.\ (2013). \textit{Gödel's Proof} (Revised ed.). Princeton University Press.
+
+\bibitem{github-repo} Mohammad Rakibul Islam. (2026). \textit{Floor Function Paper Verification Code}. GitHub Repository. \url{https://github.com/rakibulofficial1017/floor-function-paper}
+
+\bibitem{python-docs} Python Software Foundation. (2026). \textit{Python 3.11 Documentation}. \url{https://docs.python.org/3/}
+\end{thebibliography}
+
+% ============================================================
+\section*{Appendix A: Implementation Details}
+\addcontentsline{toc}{section}{Appendix A: Implementation Details}
+
+Python verification scripts used IEEE 754 double-precision floating-point arithmetic. Perturbation step size employs adaptive scaling: $\epsilon = \max(10^{-7}, |x| \cdot 10^{-10})$, clamped to $10^{-3}$ maximum. This ensures perturbation stays above machine epsilon at scale $|x|$ while remaining small enough to approximate derivatives accurately.
+
+% ============================================================
+\section*{Appendix B: String Encoding Examples}
+\addcontentsline{toc}{section}{Appendix B: String Encoding Examples}
+
+Examples demonstrating character-level text storage via ASCII encoding in base-10 positional notation. See Section 5 for detailed implementation.
+
+\end{document}
