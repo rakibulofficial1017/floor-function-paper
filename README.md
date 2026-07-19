@@ -81,14 +81,15 @@ print(N)                 # Output: 123456
 print(is_prime(17))      # Output: True
 
 # Base conversion
-print(O(13, 2))          # Output: 1101 (binary digits as decimal)
-File Structure
-floor-function-paper/
-    ├── test.py                        # Main implementation and test suite
-    ├── verification.log               # Complete test execution log (251 cases)
-    ├── README.md                      # This file
-    ├── LICENSE                        # MIT License
-    └── floor-function-paper.tex       # LaTeX manuscript
+print(O(13, 2))          # Output: 1101 (binary digits as decimal)  
+File Structure  
+floor-function-paper/  
+    ├── test.py                        # Main implementation and test suite  
+    ├── verification.log               # Complete test execution log (251 cases)  
+    ├── README.md                      # This file  
+    ├── LICENSE                        # MIT License  
+    └── floor-function-paper.tex       # LaTeX manuscript  
+    
 Known Limitations
 IEEE 754 Precision Constraints
 The base-10 array encoding scheme encounters precision issues for encoded integers exceeding ~10¹⁵ (15–16 significant digits). For example:
@@ -105,7 +106,7 @@ See Section 5 of the paper for detailed discussion.
 Complex Domain Behavior
 There is system-dependent behavior in complex evaluation:
 
-Python (cmath): Shows residue term −2bi in lower half-plane
+Python (cmath): Shows residue term 2bi in lower half-plane
 Wolfram Alpha: Returns ⌊a⌋ for all complex inputs
 This discrepancy requires further rigorous analysis. See Section 2.4 of the paper.
 
