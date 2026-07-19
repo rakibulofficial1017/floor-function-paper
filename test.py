@@ -78,7 +78,7 @@ def round_func(x):
 
 
 def precision_round(x, P):
-    """Precision Rounding: R(x, P) = F(x · 10^P - 0.5) / 10^P"""
+    """Precision Rounding: R(x, P) = F(x · 10^P + 0.5) / 10^P"""
     return F(x * (10 ** P) + 0.5) / (10 ** P)
 
 
@@ -90,7 +90,7 @@ def modulo(x, y):
 def delta_div(x, y):
     """
     Divisibility testing indicator:
-    δ_div(x, y) = x - y·F(-(x - y·F(x/y))^2 / ((x - y·F(x/y))^2 + 1)) + 1
+    δ_div(x, y) = F(-(x - y·F(x/y))^2 / ((x - y·F(x/y))^2 + 1)) + 1
     Returns 1 if y divides x, 0 otherwise.
     """
     rem = x - y * F(x / y)
@@ -144,7 +144,7 @@ def O(N, B_to):
     Returns decimal number whose digits represent base-B_to digits of N.
     """
     if B_to < 2 or B_to > 10:
-        raise ValueError("Base must satisfy 2 ≤ B < 10")
+        raise ValueError("Base must satisfy 2 ≤ B ≤ 10")
 
     num_digits = int(F(math.log(N) / math.log(B_to)) + 1) if N >= B_to else 1 #type:ignore
     result = 0
