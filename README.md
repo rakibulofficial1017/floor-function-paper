@@ -84,11 +84,11 @@ print(is_prime(17))      # Output: True
 print(O(13, 2))          # Output: 1101 (binary digits as decimal)
 File Structure
 floor-function-paper/
-├── test.py                        # Main implementation and test suite
-├── verification.log               # Complete test execution log (251 cases)
-├── README.md                      # This file
-├── LICENSE                        # MIT License
-└── floor-function-paper.tex       # LaTeX manuscript
+    ├── test.py                        # Main implementation and test suite
+    ├── verification.log               # Complete test execution log (251 cases)
+    ├── README.md                      # This file
+    ├── LICENSE                        # MIT License
+    └── floor-function-paper.tex       # LaTeX manuscript
 Known Limitations
 IEEE 754 Precision Constraints
 The base-10 array encoding scheme encounters precision issues for encoded integers exceeding ~10¹⁵ (15–16 significant digits). For example:
