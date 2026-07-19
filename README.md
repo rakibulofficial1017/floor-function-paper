@@ -82,7 +82,7 @@ print(is_prime(17))      # Output: True
 
 # Base conversion
 print(O(13, 2))          # Output: 1101 (binary digits as decimal)  
-File Structure  
+# File Structure  
 
     floor-function-paper/  
         ├── .gitignore  
