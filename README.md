@@ -6,7 +6,7 @@ This repository contains the implementation code and test suite for the paper **
 
 The core contribution is an alternative closed-form expression for the floor function using elementary trigonometric functions, derivatives, and arithmetic operations:
 
-$$F(x) = x - g\!\left(x + \frac{g'^{+}(x) - 1}{2}\right)$$
+$$F(x) = x - g\left(x + \frac{g'^{+}(x) - 1}{2}\right)$$
 
 where $g(x) = \pi^{-1}\arccos(\cos(\pi x))$ and $g'^{+}(x)$ is computed via numerical sampling.
 
